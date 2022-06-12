@@ -6,7 +6,7 @@ import execjs
 import xlwings as xw
 
 headers = {
-    'cookie': 'xhsTrackerId=59c3df13-5bb8-4811-c8d5-bd63d4914547; smidV2=202204221649186916fecea053f1e53699c9509eda14ab00d4b923b66cc19b0; customerClientId=548917684816112; xhsTracker=url=noteDetail&xhsshare=CopyLink; timestamp2=1654142614949ce489e54a9598ee70a78507def07fd00094fdb4f180361a354; timestamp2.sig=hgIY4rXmGakSOgH4TGZ8arsK45kjLYBX82JIBMdAm0k; customerBeakerSessionId=1bbbdab4f84cd5eedcf319372c4e0afd2fd84788gAJ9cQAoWBAAAABjdXN0b21lclVzZXJUeXBlcQFLA1gOAAAAX2NyZWF0aW9uX3RpbWVxAkdB2Ka8N+ztkVgJAAAAYXV0aFRva2VucQNYQQAAADFkY2NmOWY5YTdmMTQ0ZDJiM2Q2MTkwYTM2MThhMzFkLTM3M2MwZDk5NjQ4NjQ3ODRiNDI3NzJmNzllOGM3NzZkcQRYAwAAAF9pZHEFWCAAAABhODkyY2NjMWUwYTc0MzdjOTUzZjU0NjJkMDE1YWY5ZnEGWA4AAABfYWNjZXNzZWRfdGltZXEHR0HYprw37O2RWAYAAAB1c2VySWRxCFgYAAAANjA3ZTg5YzA5ZjI2YjYwMDAxMTkxZTY0cQl1Lg==; solar.beaker.session.id=1654321375907099233874',
+    'cookie': 'timestamp2=165504370723041ec17fc0602086f29b76236b0eb7b65b2e61468b4d447cef9; timestamp2.sig=Tu5JJ8F3J5x2eS-f7v0e0N5g4EkVwXRs8MGsnMI2O-I; customerBeakerSessionId=cd17ff786459cd238413b97a632a8fb25f925504gAJ9cQAoWBAAAABjdXN0b21lclVzZXJUeXBlcQFLA1gOAAAAX2NyZWF0aW9uX3RpbWVxAkdB2Kl9oERqf1gJAAAAYXV0aFRva2VucQNYQQAAADFkY2NmOWY5YTdmMTQ0ZDJiM2Q2MTkwYTM2MThhMzFkLTM3M2MwZDk5NjQ4NjQ3ODRiNDI3NzJmNzllOGM3NzZkcQRYAwAAAF9pZHEFWCAAAABlYjkxZjc0MmI4ZWU0M2FiODkyMGM1MDNjMjI1OTUwOHEGWA4AAABfYWNjZXNzZWRfdGltZXEHR0HYqX2gRGp/WAYAAAB1c2VySWRxCFgYAAAANjA3ZTg5YzA5ZjI2YjYwMDAxMTkxZTY0cQl1Lg==; customerClientId=733285881539332; solar.beaker.session.id=1655043713159038305718',
         
     'referer': 'https://pgy.xiaohongshu.com/solar/advertiser/kol/5707b9e91c07df145d5c2962?track_id=kolSearch_3d8fd57a38dc4c97976813f9bfdd0aca',
     'user-aengt': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36 Edg/101.0.1210.39',
@@ -112,38 +112,44 @@ def writeXlsx(fileName, result):
 
 if __name__ == '__main__':
 
-    ls = readXlsx(r"\WS tracking for python.xlsx")
+    ls = readXlsx(r"\WS tracking for python template.xlsx")
     result = []
     for i in ls:
-        title = i[0]
-        url = i[1]
+        title = i[0].replace("\n", "").replace("\r", "")
+        url = i[1].replace("\n", "").replace("\r", "")
         date = i[2]
+        if (title != null and url != null):
 
-
-        l1 = url.split('?')
-        l2 = l1[0].split('/')
-        userId = l2[len(l2) - 1]
-        if len(userId) == 6:
-            result.append(tuple())
-            continue
-        finalUrl = f"https://pgy.xiaohongshu.com/api/solar/kol/dataV2/notesDetail?advertiseSwitch=1&orderType=1&pageNumber=1&pageSize=8&userId={userId}&noteType=4"
+            l1 = url.split('?')
+            l2 = l1[0].split('/')
+            userId = l2[len(l2) - 1]
+            if len(userId) != 24:
+                result.append(tuple())
+                continue
+            finalUrl = f"https://pgy.xiaohongshu.com/api/solar/kol/dataV2/notesDetail?advertiseSwitch=1&orderType=1&pageNumber=1&pageSize=8&userId={userId}&noteType=4"
+            
+            resp = getInf(finalUrl, url)
         
-        resp = getInf(finalUrl, url)
-        found, total = match(result, resp, title, date, url)
-        if (not found):
-            size = total // 8
-            for pageNum in range(2, size + 2):
-                finalUrl = f"https://pgy.xiaohongshu.com/api/solar/kol/dataV2/notesDetail?advertiseSwitch=1&orderType=1&pageNumber={pageNum}&pageSize=8&userId={userId}&noteType=4"
-                resp = getInf(finalUrl, url)
-                found, total = match(result, resp, title, date, url)
-                if (found):
-                    break
-            result.append(tuple())
-        
+            found, total = match(result, resp, title, date, url)
+            if (not found):
+                size = total // 8
+                for pageNum in range(2, size + 2):
+                    finalUrl = f"https://pgy.xiaohongshu.com/api/solar/kol/dataV2/notesDetail?advertiseSwitch=1&orderType=1&pageNumber={pageNum}&pageSize=8&userId={userId}&noteType=4"
+                    time.sleep(5)
+                    resp = getInf(finalUrl, url)
+                
+                    found, total = match(result, resp, title, date, url)
+                    if (found):
+                        break
+                else:
+                    result.append(tuple())
+            
 
-        time.sleep(5)
+            time.sleep(5)
+        else:
+            result.append(tuple())
     print(result)
-    writeXlsx(r"\WS tracking for python.xlsx", result)
+    writeXlsx(r"\WS tracking for python template.xlsx", result)
     print("update success")
 
 
